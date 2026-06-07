@@ -484,7 +484,7 @@ const THEMES = {
 };
 
 /* ── STATE ── */
-let currentTheme  = 'WARKADI';
+let currentTheme  = null;     // null = belum ada tema yang dimuat
 let themeCache    = {};       // { 'WARKADI': '<html>...</html>' }
 let isTransitioning = false;
 
@@ -557,6 +557,10 @@ async function switchTheme(key) {
     const t = THEMES[key];
     if (!t) { isTransitioning = false; return; }
 
+    // Set currentTheme di awal agar guard bekerja benar
+    // sekaligus mencegah double-trigger selama proses async
+    currentTheme = key;
+
     // Update select to match programmatic calls
     select.value = key;
 
@@ -611,7 +615,6 @@ async function switchTheme(key) {
     document.title = `[${t.label}] Tema Pack Switcher`;
 
     // Update state
-    currentTheme = key;
     barStatus.textContent = 'AKTIF';
     isTransitioning = false;
 }
