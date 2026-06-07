@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base target="_blank">
+    <title>BUNDAKU — Asisten Ibu Rumah Tangga v1.0</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Lato:wght@300;400;700&family=Dancing+Script:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════
+           BUNDAKU — DESIGN TOKENS (IRT THEME)
+        ═══════════════════════════════════ */
+        :root {
+            --b-cream:      #fdf8f2;
+            --b-linen:      #f5ede0;
+            --b-blush:      #f9e8e0;
+            --b-rose:       #e8a098;
+            --b-dusty:      #c97b7b;
+            --b-terracotta: #b5614e;
+            --b-mauve:      #9b6b8a;
+            --b-lavender:   #c8afc8;
+            --b-sage:       #8aab88;
+            --b-mint:       #a8c8a0;
+            --b-gold:       #c9a048;
+            --b-amber:      #e8b860;
+            --b-brown:      #7a5840;
+            --b-dark:       #3a2820;
+            --b-text:       #5a3a2a;
+            --b-muted:      #9a7868;
+            --b-border:     rgba(201,160,72,0.22);
+            --b-bg:         #fef9f4;
+            --sidebar-w:    300px;
+        }
+        * { box-sizing:border-box; margin:0; padding:0; }
+
+        body {
+            font-family:'Lato',sans-serif;
+            background-color:var(--b-bg);
+            color:var(--b-text);
+            overflow-x:hidden;
+            min-height:100vh;
+            background-image:
+                radial-gradient(ellipse at 10% 5%, rgba(232,160,152,0.18) 0%, transparent 50%),
+                radial-gradient(ellipse at 90% 95%, rgba(168,200,160,0.12) 0%, transparent 45%),
+                radial-gradient(ellipse at 50% 50%, rgba(253,248,242,0.8) 0%, transparent 80%),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Ccircle cx='60' cy='30' r='8' fill='none' stroke='%23e8a098' stroke-width='0.6' opacity='0.08'/%3E%3Ccircle cx='30' cy='90' r='5' fill='none' stroke='%23c9a048' stroke-width='0.6' opacity='0.06'/%3E%3Ccircle cx='90' cy='75' r='6' fill='none' stroke='%238aab88' stroke-width='0.6' opacity='0.07'/%3E%3Cpath d='M55 20 Q60 10 65 20 Q70 30 60 35 Q50 30 55 20' fill='rgba(232,160,152,0.07)'/%3E%3Cpath d='M25 85 Q30 75 35 85 Q40 95 30 100 Q20 95 25 85' fill='rgba(138,171,136,0.06)'/%3E%3C/svg%3E");
+        }
+
+        .f-playfair  { font-family:'Playfair Display',serif; }
+        .f-dancing   { font-family:'Dancing Script',cursive; }
+        .f-lato      { font-family:'Lato',sans-serif; }
+        .f-mono      { font-family:'Share Tech Mono',monospace; }
+
+        /* ── LOADING ── */
+        #loading {
+            position:fixed; inset:0;
+            background:linear-gradient(135deg,#fdf5ee,#fef0e8);
+            z-index:9999;
+            display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            transition:opacity 0.8s ease;
+        }
+        #loading.fade-out { opacity:0; pointer-events:none; }
+
+        .load-icon {
+            font-size:3.5rem;
+            animation:housePulse 2s ease-in-out infinite;
+            margin-bottom:16px; filter:drop-shadow(0 4px 16px rgba(201,122,123,0.35));
+        }
+        @keyframes housePulse {
+            0%,100%{ transform:scale(1) rotate(-2deg); }
+            50%    { transform:scale(1.1) rotate(2deg); }
+        }
+        .load-bar-wrap { width:220px; height:3px; background:rgba(201,122,123,0.15); border-radius:2px; margin-top:20px; overflow:hidden; }
+        .load-bar {
+            height:100%;
+            background:linear-gradient(90deg,var(--b-rose),var(--b-amber),var(--b-sage));
+            animation:loadSweep 2.5s ease-in-out infinite;
+        }
+        @keyframes loadSweep {
+            0%  { width:0%;  margin-left:0; }
+            50% { width:80%; margin-left:10%; }
+            100%{ width:0%;  margin-left:100%; }
+        }
+        .load-text {
+            font-family:'Lato',sans-serif; font-size:11px;
+            letter-spacing:0.3em; color:var(--b-muted);
+            margin-top:14px; text-transform:uppercase;
+            animation:fadePulse 1.8s ease-in-out infinite;
+        }
+        @keyframes fadePulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+        /* ── OVERLAY ── */
+        #sidebar-overlay {
+            position:fixed; inset:0;
+            background:rgba(58,40,32,0.55);
+            backdrop-filter:blur(4px);
+            z-index:1040; display:none;
+            opacity:0; transition:opacity 0.35s;
+        }
+        #sidebar-overlay.active { display:block; opacity:1; }
+
+        /* ── SIDEBAR ── */
+        #sidebar {
+            width:var(--sidebar-w); flex-shrink:0;
+            background:linear-gradient(175deg,#fdf5ee,#fef8f2,#fdf0e8);
+            border-right:1px solid rgba(201,122,123,0.18);
+            position:sticky; top:0;
+            height:100vh; overflow-y:auto;
+            padding:28px 22px;
+            display:flex; flex-direction:column;
+            z-index:1050;
+            box-shadow:inset -1px 0 0 rgba(201,122,123,0.08), 3px 0 24px rgba(58,40,32,0.06);
+        }
+        #sidebar::-webkit-scrollbar { width:3px; }
+        #sidebar::-webkit-scrollbar-thumb { background:rgba(201,122,123,0.22); border-radius:3px; }
+
+        @media (max-width:767.98px) {
+            #sidebar {
+                position:fixed; top:0; left:0; height:100vh;
+                transform:translateX(-100%);
+                transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);
+                box-shadow:4px 0 40px rgba(58,40,32,0.15);
+            }
+            #sidebar.open { transform:translateX(0); }
+        }
+
+        /* ── TOPBAR ── */
+        #topbar {
+            display:none;
+            background:linear-gradient(90deg,#fdf5ee,#fef8f2);
+            border-bottom:1px solid rgba(201,122,123,0.15);
+            padding:11px 16px; position:sticky; top:0; z-index:1030;
+            align-items:center; justify-content:space-between;
+            box-shadow:0 2px 12px rgba(58,40,32,0.06);
+        }
+        @media (max-width:767.98px) { #topbar { display:flex; } }
+
+        /* ── BURGER ── */
+        .burger-btn {
+            background:rgba(232,160,152,0.12);
+            border:1px solid rgba(201,122,123,0.28);
+            border-radius:8px; width:40px; height:40px;
+            display:flex; align-items:center; justify-content:center;
+            color:var(--b-dusty); font-size:1rem;
+            cursor:pointer; transition:all 0.25s; flex-shrink:0;
+        }
+        .burger-btn:hover { background:rgba(232,160,152,0.25); box-shadow:0 2px 12px rgba(201,122,123,0.2); }
+
+        /* ── PANELS ── */
+        .b-panel {
+            background:#fff;
+            border:1px solid rgba(201,122,123,0.15);
+            border-radius:16px;
+            box-shadow:0 8px 40px rgba(58,40,32,0.06), 0 2px 8px rgba(201,122,123,0.06);
+            position:relative;
+        }
+        .b-card {
+            background:var(--b-linen);
+            border:1px solid rgba(201,122,123,0.14);
+            border-radius:12px;
+            transition:border-color 0.3s, box-shadow 0.3s;
+        }
+        .b-card:hover { border-color:rgba(201,122,123,0.35); box-shadow:0 4px 18px rgba(201,122,123,0.1); }
+
+        /* ── DIVIDER ── */
+        .floral-divider {
+            display:flex; align-items:center; gap:10px;
+            color:rgba(201,122,123,0.45);
+            font-size:14px; margin:14px 0;
+        }
+        .floral-divider::before,.floral-divider::after {
+            content:''; flex:1; height:1px;
+            background:linear-gradient(90deg,transparent,rgba(201,122,123,0.22),transparent);
+        }
+
+        /* ── LABELS ── */
+        .b-label {
+            font-family:'Lato',sans-serif;
+            font-size:10px; font-weight:700;
+            letter-spacing:0.22em; text-transform:uppercase;
+            color:var(--b-muted);
+        }
+        .b-badge {
+            background:rgba(232,184,96,0.15);
+            border:1px solid rgba(201,160,72,0.28);
+            color:var(--b-gold);
+            font-size:9px; letter-spacing:0.1em; font-weight:700;
+            padding:2px 8px; border-radius:20px;
+            display:inline-block;
+        }
+
+        /* ── AVATAR CARD ── */
+        .avatar-wrap {
+            display:inline-block; width:88px; height:88px;
+            background:conic-gradient(from 0deg,var(--b-rose),var(--b-amber),var(--b-sage),var(--b-lavender),var(--b-rose));
+            border-radius:50%; padding:3px;
+            animation:ringRotate 12s linear infinite;
+            filter:drop-shadow(0 4px 16px rgba(201,122,123,0.35));
+        }
+        @keyframes ringRotate { to { transform:rotate(360deg); } }
+        .avatar-wrap img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; }
+
+        @keyframes floatBunda { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+        .float-bunda { animation:floatBunda 4s ease-in-out infinite; display:inline-block; }
+
+        /* ── PULSE DOT ── */
+        .status-dot {
+            width:8px; height:8px;
+            background:var(--b-sage); border-radius:50%; flex-shrink:0;
+            animation:statusPulse 2.2s ease-out infinite;
+        }
+        @keyframes statusPulse {
+            0%  { box-shadow:0 0 0 0 rgba(138,171,136,0.8); }
+            70% { box-shadow:0 0 0 10px rgba(138,171,136,0); }
+            100%{ box-shadow:0 0 0 0 rgba(138,171,136,0); }
+        }
+
+        /* ── INPUT ── */
+        .b-input {
+            background:#fff; color:var(--b-text);
+            border:1px solid rgba(201,122,123,0.22);
+            border-radius:8px; padding:8px 12px;
+            font-family:'Share Tech Mono',monospace; font-size:12px;
+            transition:border-color 0.3s, box-shadow 0.3s;
+            outline:none; width:100%;
+        }
+        .b-input:focus { border-color:var(--b-rose); box-shadow:0 0 0 3px rgba(232,160,152,0.12); }
+
+        /* ── SWITCH ── */
+        .form-check-input {
+            width:2.5em; height:1.25em;
+            background-color:#e8d8d0; border-color:rgba(201,122,123,0.3);
+            cursor:pointer;
+        }
+        .form-check-input:checked { background-color:var(--b-dusty) !important; border-color:var(--b-dusty) !important; }
+        .form-check-input:focus { box-shadow:0 0 0 3px rgba(201,122,123,0.15); }
+
+        /* ── PROGRESS BAR ── */
+        #active-progress-bar {
+            height:100%; width:0%;
+            background:linear-gradient(90deg,var(--b-rose),var(--b-amber),var(--b-sage));
+            box-shadow:0 0 10px rgba(232,160,152,0.45);
+            border-radius:4px; transition:width 0.5s ease;
+        }
+
+        /* ── MAIN BUTTON ── */
+        .btn-bunda {
+            background:linear-gradient(135deg,var(--b-dusty),var(--b-terracotta),#a05040,var(--b-mauve));
+            background-size:300% auto; color:#fff;
+            font-family:'Playfair Display',serif; font-weight:700;
+            letter-spacing:0.06em; border:none;
+            border-radius:12px; padding:16px 20px;
+            box-shadow:0 8px 30px rgba(201,97,78,0.3), 0 2px 8px rgba(201,97,78,0.2);
+            transition:all 0.5s ease; font-size:1rem;
+            cursor:pointer; width:100%;
+            display:flex; align-items:center; justify-content:center; gap:12px;
+            position:relative; overflow:hidden;
+        }
+        .btn-bunda::before {
+            content:''; position:absolute; inset:0;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+            transform:translateX(-100%); transition:transform 0.6s;
+        }
+        .btn-bunda:hover::before { transform:translateX(100%); }
+        .btn-bunda:hover { background-position:right center; transform:translateY(-2px); box-shadow:0 12px 40px rgba(201,97,78,0.4); }
+        .btn-bunda:active { transform:scale(0.98); }
+
+        .btn-stop {
+            background:#fff; color:var(--b-muted);
+            font-family:'Playfair Display',serif; font-weight:700;
+            border:2px solid rgba(201,122,123,0.3); border-radius:12px;
+            padding:16px 20px; transition:all 0.3s;
+            cursor:pointer; width:100%;
+            display:flex; align-items:center; justify-content:center; gap:10px;
+            font-size:1rem;
+        }
+        .btn-stop:hover { background:var(--b-blush); border-color:var(--b-rose); }
+
+        /* ── TABLE ── */
+        .b-table { width:100%; border-collapse:collapse; }
+        .b-table thead th {
+            background:var(--b-linen);
+            color:var(--b-muted);
+            font-family:'Lato',sans-serif; font-size:10px;
+            font-weight:700; letter-spacing:0.2em; text-transform:uppercase;
+            border-bottom:1px solid rgba(201,122,123,0.12);
+            padding:12px 16px; position:sticky; top:0; z-index:2;
+        }
+        .b-table tbody tr { border-bottom:1px solid rgba(201,122,123,0.07); transition:background 0.2s; }
+        .b-table tbody tr:hover { background:var(--b-blush); }
+        .b-table td { font-family:'Share Tech Mono',monospace; font-size:11px; padding:10px 16px; color:var(--b-muted); }
+
+        /* ── TOAST ── */
+        #b-toast {
+            position:fixed; bottom:22px; right:22px;
+            z-index:1200; max-width:340px; width:calc(100% - 44px);
+            transform:translateY(130px); opacity:0;
+            transition:all 0.55s cubic-bezier(0.68,-0.55,0.27,1.55);
+            pointer-events:none;
+        }
+        #b-toast.show { transform:translateY(0); opacity:1; pointer-events:auto; }
+
+        /* ── MODAL ── */
+        #b-modal {
+            position:fixed; inset:0;
+            display:none; align-items:center; justify-content:center;
+            background:rgba(58,40,32,0.55); backdrop-filter:blur(8px);
+            z-index:1300; opacity:0; transition:opacity 0.35s;
+        }
+        #b-modal.visible { display:flex; opacity:1; }
+        .b-modal-box {
+            background:linear-gradient(145deg,#fff,#fdf5ee,#fef0e8);
+            border:1px solid rgba(201,122,123,0.22); border-radius:20px;
+            box-shadow:0 30px 80px rgba(58,40,32,0.2), 0 8px 30px rgba(201,122,123,0.15);
+            max-width:440px; width:calc(100% - 32px); padding:30px;
+            transform:scale(0.9) translateY(10px); transition:transform 0.35s;
+        }
+        #b-modal.visible .b-modal-box { transform:scale(1) translateY(0); }
+
+        /* ── ALARM OVERLAY ── */
+        #alarm-overlay {
+            position:fixed; inset:0;
+            display:none; align-items:center; justify-content:center;
+            background:rgba(58,40,32,0.72); backdrop-filter:blur(12px);
+            z-index:1400; flex-direction:column;
+        }
+        #alarm-overlay.active { display:flex; }
+        .alarm-box {
+            background:linear-gradient(145deg,#fff,#fdf0e8);
+            border:2px solid rgba(201,122,123,0.5); border-radius:24px;
+            padding:40px 36px; max-width:400px; width:calc(100% - 32px);
+            text-align:center;
+            box-shadow:0 0 80px rgba(232,160,152,0.4), 0 30px 80px rgba(58,40,32,0.25);
+            animation:alarmPop 0.6s cubic-bezier(0.68,-0.55,0.27,1.55);
+        }
+        @keyframes alarmPop {
+            0%   { transform:scale(0.3) rotate(-8deg); opacity:0; }
+            60%  { transform:scale(1.08) rotate(2deg); }
+            100% { transform:scale(1) rotate(0deg); opacity:1; }
+        }
+        .alarm-icon {
+            font-size:4rem; margin-bottom:16px;
+            animation:alarmRing 0.4s ease-in-out infinite alternate;
+            display:block;
+        }
+        @keyframes alarmRing {
+            0%   { transform:rotate(-15deg) scale(1); }
+            100% { transform:rotate(15deg) scale(1.1); }
+        }
+        .alarm-glow {
+            animation:glowPulse 1s ease-in-out infinite;
+        }
+        @keyframes glowPulse {
+            0%,100% { box-shadow:0 0 20px rgba(232,160,152,0.3), 0 0 60px rgba(232,160,152,0.1); }
+            50%     { box-shadow:0 0 40px rgba(232,160,152,0.7), 0 0 100px rgba(232,160,152,0.3); }
+        }
+        .confetti-wrap { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+        .confetti {
+            position:absolute; width:8px; height:8px;
+            border-radius:2px;
+            animation:confettiFall var(--dur,3s) ease-in var(--del,0s) infinite;
+        }
+        @keyframes confettiFall {
+            0%  { transform:translateY(-20px) rotate(0deg); opacity:1; }
+            100%{ transform:translateY(100vh) rotate(720deg); opacity:0; }
+        }
+
+        /* ── PARTICLE FLOWERS ── */
+        .flower-particles { position:absolute; inset:0; pointer-events:none; overflow:hidden; border-radius:inherit; }
+        .fp {
+            position:absolute; font-size:10px; opacity:0;
+            animation:floatFlower var(--dur,4s) ease-in var(--del,0s) infinite;
+        }
+        @keyframes floatFlower {
+            0%  { opacity:0; transform:translateY(0) scale(0) rotate(0deg); }
+            15% { opacity:0.8; }
+            85% { opacity:0.3; }
+            100%{ opacity:0; transform:translateY(-80px) scale(0.5) rotate(360deg) translateX(var(--dx,0px)); }
+        }
+
+        /* ── RECIPE CARD DECO ── */
+        .recipe-dots { display:flex; gap:6px; align-items:center; margin-bottom:10px; }
+        .recipe-dot  { width:6px; height:6px; border-radius:50%; }
+
+        /* ── LAYOUT ── */
+        #app-wrapper { display:flex; min-height:100vh; position:relative; z-index:1; }
+        #main-content { flex:1; min-width:0; display:flex; flex-direction:column; }
+
+        ::-webkit-scrollbar { width:4px; }
+        ::-webkit-scrollbar-track { background:var(--b-linen); }
+        ::-webkit-scrollbar-thumb { background:rgba(201,122,123,0.3); border-radius:4px; }
+    </style>
+</head>
+<body>
+
+<!-- ═══ LOADING ═══ -->
+<div id="loading">
+    <div style="text-align:center;margin-bottom:8px">
+        <div style="font-family:'Dancing Script',cursive;font-size:2.8rem;color:var(--b-dusty);letter-spacing:0.05em;text-shadow:0 2px 12px rgba(201,122,123,0.3)">Bundaku</div>
+        <div style="font-family:'Lato',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.5em;color:var(--b-muted);margin-top:4px">ASISTEN IBU RUMAH TANGGA</div>
+    </div>
+    <div class="load-icon">🏡</div>
+    <div class="load-bar-wrap"><div class="load-bar"></div></div>
+    <p class="load-text">Menyiapkan dapur... masakan sedang dimasak...</p>
+</div>
+
+<!-- ═══ ALARM OVERLAY ═══ -->
+<div id="alarm-overlay" class="alarm-glow">
+    <div style="position:relative">
+        <div class="confetti-wrap" id="confetti-container"></div>
+        <div class="alarm-box">
+            <span class="alarm-icon" id="alarm-emoji">🔔</span>
+            <h2 class="f-playfair" style="font-size:1.8rem;color:var(--b-terracotta);margin-bottom:8px;font-weight:900">Tugas Selesai!</h2>
+            <p class="f-dancing" style="font-size:1.3rem;color:var(--b-dusty);margin-bottom:4px" id="alarm-title">Semua pekerjaan rumah tuntas!</p>
+            <p style="font-size:0.9rem;color:var(--b-muted);margin-bottom:22px;line-height:1.6" id="alarm-message">
+                Bundaku telah menyelesaikan semua misi hari ini. Saatnya istirahat dan manjakan diri! ☕
+            </p>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+                <button onclick="dismissAlarm()" class="btn-bunda" style="width:auto;padding:12px 28px;font-size:0.9rem;border-radius:10px">
+                    ✨ Terima Kasih, Bunda!
+                </button>
+                <button onclick="dismissAlarm()" style="background:var(--b-linen);border:1px solid rgba(201,122,123,0.25);color:var(--b-muted);border-radius:10px;padding:12px 22px;cursor:pointer;font-size:0.85rem;font-family:'Lato',sans-serif;font-weight:700">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ MODAL ═══ -->
+<div id="b-modal">
+    <div class="b-modal-box">
+        <div style="display:flex;align-items:flex-start;gap:14px;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid rgba(201,122,123,0.12)">
+            <div style="width:44px;height:44px;background:var(--b-blush);border:1px solid rgba(201,122,123,0.25);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.3rem">
+                🏡
+            </div>
+            <div>
+                <h3 id="modal-title" class="f-playfair" style="font-size:1.05rem;color:var(--b-terracotta);margin:0 0 2px;font-weight:700">Pesan Bunda</h3>
+                <span class="b-label" style="color:var(--b-rose)">Kabar dari Dapur</span>
+            </div>
+        </div>
+        <p id="b-modal-message" class="f-mono" style="font-size:12px;color:var(--b-muted);line-height:1.85;margin-bottom:22px"></p>
+        <div style="display:flex;justify-content:flex-end">
+            <button onclick="closeModal()" id="modal-btn" class="btn-bunda" style="width:auto;padding:10px 28px;font-size:0.9rem;border-radius:10px">Siap, Bunda!</button>
+        </div>
+    </div>
+</div>
+
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- ═══ APP ═══ -->
+<div id="app-wrapper">
+
+<!-- ── SIDEBAR ── -->
+<aside id="sidebar">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+        <div style="width:46px;height:46px;background:linear-gradient(135deg,var(--b-rose),var(--b-dusty));border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(201,122,123,0.35);flex-shrink:0;font-size:1.4rem">
+            🏡
+        </div>
+        <div style="flex:1;min-width:0">
+            <h1 class="f-dancing" style="font-size:1.4rem;color:var(--b-terracotta);line-height:1.1;margin:0">Bundaku</h1>
+            <span class="b-badge">IRT Pro v1.0</span>
+        </div>
+        <button id="sidebar-close-btn" onclick="closeSidebar()" class="burger-btn" style="display:none">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <div class="floral-divider">🌸 Profil Bunda 🌸</div>
+
+    <!-- Avatar -->
+    <div class="b-card" style="padding:20px;text-align:center;position:relative;overflow:hidden;background:linear-gradient(135deg,#fff8f5,#fdf5ee)">
+        <div class="flower-particles" id="sidebar-particles"></div>
+        <div class="float-bunda" style="position:relative;z-index:1;display:inline-block;margin-bottom:12px">
+            <div class="avatar-wrap">
+                <img src="https://drive.google.com/thumbnail?id=1GWyUvo-un46jZ78rFMZZqmmi1VbLe1D2&sz=w1000" alt="Bunda" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\'font-size:3rem;display:flex;align-items:center;justify-content:center;height:100%\'>👩‍🍳</div>'">
+            </div>
+        </div>
+        <div style="position:relative;z-index:1">
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:5px">
+                <div class="status-dot"></div>
+                <span style="font-size:11px;color:var(--b-sage);font-weight:700;letter-spacing:0.15em;text-transform:uppercase">Aktif & Semangat</span>
+            </div>
+            <p class="f-dancing" style="font-size:1rem;color:var(--b-dusty);margin:0">"Rumah rapi, hati bahagia"</p>
+        </div>
+    </div>
+
+    <div class="floral-divider">🌿 Statistik Hari Ini 🌿</div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="b-card" style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:#fff">
+            <div style="display:flex;align-items:center;gap:8px">
+                <span>🗞️</span>
+                <span class="b-label">Resep Dicari</span>
+            </div>
+            <span id="sidebar-news-count" class="f-mono" style="font-size:11px;font-weight:700;color:var(--b-terracotta)">—</span>
+        </div>
+        <div class="b-card" style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:#fff">
+            <div style="display:flex;align-items:center;gap:8px">
+                <span>📋</span>
+                <span class="b-label">Daftar Belanja</span>
+            </div>
+            <span id="sidebar-db-count" class="f-mono" style="font-size:11px;font-weight:700;color:var(--b-sage)">—</span>
+        </div>
+        <div class="b-card" style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:#fff">
+            <div style="display:flex;align-items:center;gap:8px">
+                <span>🔗</span>
+                <span class="b-label">Status Server</span>
+            </div>
+            <span id="gas-status" class="f-mono" style="font-size:11px;font-weight:700;color:var(--b-muted)">
+                <i class="fa-solid fa-circle-notch fa-spin" style="font-size:9px"></i>
+            </span>
+        </div>
+    </div>
+
+    <div class="floral-divider">💐 Agenda Harian 💐</div>
+
+    <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="b-card" style="padding:10px 14px;background:rgba(138,171,136,0.1);border-color:rgba(138,171,136,0.2);display:flex;gap:10px;align-items:flex-start">
+            <span>🍳</span>
+            <div>
+                <p style="font-size:11px;font-weight:700;color:var(--b-brown);margin:0">Masak Sarapan</p>
+                <p style="font-size:10px;color:var(--b-muted);margin:0">Pagi — Selesai ✓</p>
+            </div>
+        </div>
+        <div class="b-card" style="padding:10px 14px;background:rgba(232,160,152,0.1);border-color:rgba(201,122,123,0.2);display:flex;gap:10px;align-items:flex-start">
+            <span>🧹</span>
+            <div>
+                <p style="font-size:11px;font-weight:700;color:var(--b-brown);margin:0">Bersih-Bersih</p>
+                <p style="font-size:10px;color:var(--b-muted);margin:0">Pagi — Berjalan...</p>
+            </div>
+        </div>
+        <div class="b-card" style="padding:10px 14px;background:rgba(201,160,72,0.08);border-color:rgba(201,160,72,0.18);display:flex;gap:10px;align-items:flex-start">
+            <span>🛒</span>
+            <div>
+                <p style="font-size:11px;font-weight:700;color:var(--b-brown);margin:0">Belanja Siang</p>
+                <p style="font-size:10px;color:var(--b-muted);margin:0">Siang — Menunggu</p>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top:auto;padding-top:10px">
+        <div class="floral-divider">🌷 v1.0 🌷</div>
+        <p style="text-align:center;font-size:9px;color:var(--b-muted);opacity:0.5;margin:0;font-family:'Lato',sans-serif;font-weight:700;letter-spacing:0.15em">BUNDAKU HOME ASSISTANT</p>
+    </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<div id="main-content">
+
+    <!-- TOPBAR -->
+    <div id="topbar">
+        <div style="display:flex;align-items:center;gap:10px">
+            <button class="burger-btn" onclick="openSidebar()"><i class="fa-solid fa-bars"></i></button>
+            <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:30px;height:30px;background:linear-gradient(135deg,var(--b-rose),var(--b-dusty));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem">🏡</div>
+                <span class="f-dancing" style="font-size:1.2rem;color:var(--b-terracotta)">Bundaku</span>
+                <span class="b-badge">IRT Pro</span>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+            <div class="status-dot"></div>
+            <span style="font-size:10px;color:var(--b-sage);font-weight:700">AKTIF</span>
+        </div>
+    </div>
+
+    <!-- PAGE CONTENT -->
+    <main style="flex:1;padding:28px 24px 110px;max-width:980px;width:100%;margin:0 auto">
+
+        <!-- Server Banner -->
+        <div id="gas-info" style="background:linear-gradient(90deg,rgba(232,184,96,0.1),rgba(232,184,96,0.04));border:1px solid rgba(201,160,72,0.2);border-radius:12px;padding:10px 16px;margin-bottom:22px;display:none;align-items:center;gap:10px">
+            <span style="font-size:1.1rem;flex-shrink:0">☁️</span>
+            <div>
+                <span style="font-size:11px;font-weight:700;color:var(--b-gold);letter-spacing:0.08em">GOOGLE APPS SCRIPT</span>
+                <p class="f-mono" style="font-size:10px;color:var(--b-muted);margin:2px 0 0">Data belanja dari spreadsheet Bunda terhubung.</p>
+            </div>
+            <span id="gas-server-label" class="f-mono" style="font-size:10px;color:var(--b-muted);margin-left:auto;white-space:nowrap">
+                <i class="fa-solid fa-circle-notch fa-spin" style="color:var(--b-gold)"></i> Menghubungi server...
+            </span>
+        </div>
+
+        <!-- ══ COMMAND CENTER ══ -->
+        <section style="margin-bottom:24px">
+            <div class="b-panel" style="padding:28px 30px;overflow:hidden">
+                <div class="flower-particles" id="main-particles"></div>
+
+                <!-- Header -->
+                <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:26px;position:relative;z-index:2">
+                    <div style="width:60px;height:60px;background:linear-gradient(135deg,var(--b-blush),#fff0e8);border:2px solid rgba(201,122,123,0.2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0">
+                        👩‍🍳
+                    </div>
+                    <div>
+                        <div class="b-label" style="color:var(--b-rose);font-size:10px;letter-spacing:0.3em;margin-bottom:4px">🌸 PUSAT KENDALI BUNDA 🌸</div>
+                        <h2 class="f-playfair" style="font-size:1.7rem;color:var(--b-terracotta);margin:0;line-height:1;font-weight:900">Bundaku</h2>
+                        <h3 class="f-dancing" style="font-size:1.2rem;color:var(--b-dusty);margin:2px 0 0;line-height:1.2;font-weight:500">Asisten Ibu Rumah Tangga Ceria</h3>
+                        <p style="font-size:0.85rem;color:var(--b-muted);margin:6px 0 0;line-height:1.5">Atur jadwal dan tugas harian dengan mudah. Bunda pasti bisa! 💪</p>
+                    </div>
+                </div>
+
+                <!-- Toggles -->
+                <div class="row g-3" style="margin-bottom:16px;position:relative;z-index:2">
+                    <div class="col-md-6">
+                        <div class="b-card" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#fff">
+                            <div style="display:flex;align-items:center;gap:12px">
+                                <div style="width:38px;height:38px;background:linear-gradient(135deg,#fff5f3,var(--b-blush));border:1px solid rgba(201,122,123,0.18);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem">
+                                    🗞️
+                                </div>
+                                <div>
+                                    <span style="display:block;font-weight:700;color:var(--b-brown);font-size:0.88rem">Cari Resep & Tips</span>
+                                    <span class="b-label" style="font-size:9px">Auto Browsing Inspirasi</span>
+                                </div>
+                            </div>
+                            <div class="form-check form-switch" style="margin:0;padding:0">
+                                <input class="form-check-input" type="checkbox" id="master-news-active" checked style="margin:0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="b-card" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#fff">
+                            <div style="display:flex;align-items:center;gap:12px">
+                                <div style="width:38px;height:38px;background:linear-gradient(135deg,#f5fff3,#e8f5e8);border:1px solid rgba(138,171,136,0.22);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem">
+                                    🛒
+                                </div>
+                                <div>
+                                    <span style="display:block;font-weight:700;color:var(--b-brown);font-size:0.88rem">Daftar Belanja</span>
+                                    <span class="b-label" style="font-size:9px">Penelusuran Toko Online</span>
+                                </div>
+                            </div>
+                            <div class="form-check form-switch" style="margin:0;padding:0">
+                                <input class="form-check-input" type="checkbox" id="master-asst-active" checked style="margin:0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Config Cards -->
+                <div class="row g-3" style="margin-bottom:16px;position:relative;z-index:2">
+                    <div class="col-lg-6">
+                        <div class="b-card" style="padding:18px;background:#fff">
+                            <div class="recipe-dots">
+                                <div class="recipe-dot" style="background:var(--b-rose)"></div>
+                                <div class="recipe-dot" style="background:var(--b-amber)"></div>
+                                <div class="recipe-dot" style="background:var(--b-sage)"></div>
+                                <span style="font-size:10px;font-weight:700;color:var(--b-terracotta);margin-left:4px;letter-spacing:0.12em">🗞️ PENGATURAN RESEP</span>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:11px">
+                                <div>
+                                    <div class="b-label" style="margin-bottom:7px">Sumber Inspirasi</div>
+                                    <div class="b-input" style="display:flex;align-items:center;gap:8px;cursor:default">
+                                        <span>🌐</span>
+                                        <span style="font-size:11px;color:var(--b-muted)">RSS Kuliner & Keluarga Live</span>
+                                    </div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <div class="b-label" style="margin-bottom:7px">Jumlah</div>
+                                        <input type="number" id="news-limit" value="21" class="b-input" style="text-align:center;font-weight:700;color:var(--b-terracotta)">
+                                    </div>
+                                    <div class="col-8">
+                                        <div class="b-label" style="margin-bottom:7px">Jeda (Detik)</div>
+                                        <div style="display:flex;align-items:center;gap:6px">
+                                            <input type="number" id="news-min-delay" value="10" class="b-input" style="text-align:center">
+                                            <span style="color:var(--b-muted);flex-shrink:0">–</span>
+                                            <input type="number" id="news-max-delay" value="15" class="b-input" style="text-align:center">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="b-card" style="padding:18px;background:#fff">
+                            <div class="recipe-dots">
+                                <div class="recipe-dot" style="background:var(--b-sage)"></div>
+                                <div class="recipe-dot" style="background:var(--b-mint)"></div>
+                                <div class="recipe-dot" style="background:var(--b-lavender)"></div>
+                                <span style="font-size:10px;font-weight:700;color:var(--b-sage);margin-left:4px;letter-spacing:0.12em">🛒 PENGATURAN BELANJA</span>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:11px">
+                                <div>
+                                    <div class="b-label" style="margin-bottom:7px">Status Daftar</div>
+                                    <div class="b-input" style="display:flex;align-items:center;gap:8px;cursor:default">
+                                        <i class="fa-solid fa-link" id="db-link-icon" style="color:#4ade80;font-size:11px"></i>
+                                        <span id="db-status-text" style="font-size:11px;color:var(--b-muted)">Menghubungkan ke server...</span>
+                                    </div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <div class="b-label" style="margin-bottom:7px">Jumlah</div>
+                                        <input type="number" id="asst-count" value="11" class="b-input" style="text-align:center;font-weight:700;color:var(--b-sage)">
+                                    </div>
+                                    <div class="col-8">
+                                        <div class="b-label" style="margin-bottom:7px">Jeda (Detik)</div>
+                                        <div style="display:flex;align-items:center;gap:6px">
+                                            <input type="number" id="asst-min-delay" value="10" class="b-input" style="text-align:center">
+                                            <span style="color:var(--b-muted);flex-shrink:0">–</span>
+                                            <input type="number" id="asst-max-delay" value="15" class="b-input" style="text-align:center">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Control -->
+                <div class="b-card" style="padding:18px;position:relative;z-index:2;background:#fff">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+                        <span class="b-label">⏱ Jeda Antar Sesi (Detik)</span>
+                        <div class="b-card" style="display:flex;align-items:center;gap:6px;padding:6px 14px;background:var(--b-linen)">
+                            <input type="number" id="inter-bot-delay" value="10" class="f-mono" style="width:42px;text-align:center;font-weight:700;color:var(--b-brown);background:transparent;border:none;outline:none;font-size:0.85rem">
+                            <span class="b-label">dtk</span>
+                        </div>
+                    </div>
+                    <button id="master-start-btn" onclick="startMasterBot()" class="btn-bunda">
+                        <span style="font-size:1.1rem">🏡</span>
+                        Mulai Tugas Harian, Bunda!
+                    </button>
+                    <p style="font-family:'Dancing Script',cursive;font-style:italic;font-size:0.9rem;color:rgba(201,122,123,0.5);text-align:center;margin-top:12px;padding-top:12px;border-top:1px dashed rgba(201,122,123,0.15)">
+                        "Rumah yang bersih adalah hadiah terbaik untuk keluarga tercinta." 🌸
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══ PROGRESS ══ -->
+        <section id="active-progress-panel" style="margin-bottom:20px;display:none">
+            <div class="b-panel" style="padding:16px 20px;border-left:4px solid var(--b-rose)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <span id="active-status-text" class="f-mono" style="font-size:11px;color:var(--b-brown);display:flex;align-items:center;gap:8px">
+                        <i class="fa-solid fa-circle-notch fa-spin" style="color:var(--b-rose)"></i> Sedang mengerjakan...
+                    </span>
+                    <span id="active-counter" class="f-mono b-card" style="font-size:10px;color:var(--b-terracotta);padding:3px 10px;border-radius:8px;background:#fff">0/0</span>
+                </div>
+                <div style="height:6px;background:var(--b-linen);border-radius:4px;border:1px solid rgba(201,122,123,0.1);overflow:hidden">
+                    <div id="active-progress-bar"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══ LOG ══ -->
+        <div class="b-panel" style="padding:24px">
+            <h3 class="f-playfair" style="font-size:1.15rem;color:var(--b-terracotta);font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:10px">
+                <span>📋</span> Catatan Kegiatan Bunda
+            </h3>
+            <div style="overflow-x:auto;overflow-y:auto;max-height:360px">
+                <table class="b-table">
+                    <thead>
+                        <tr>
+                            <th>Kegiatan</th>
+                            <th>Detail Tugas</th>
+                            <th style="text-align:center">Waktu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-log">
+                        <tr>
+                            <td colspan="3" style="text-align:center;padding:50px 16px;color:rgba(201,122,123,0.25)">
+                                <span style="font-size:1.8rem;display:block;margin-bottom:10px;opacity:0.3">🍽️</span>
+                                <span style="font-size:12px;font-family:'Lato',sans-serif;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--b-muted)">Belum ada kegiatan hari ini.</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</div><!-- /main-content -->
+</div><!-- /app-wrapper -->
+
+<!-- ══ TOAST ══ -->
+<div id="b-toast">
+    <div class="b-panel" style="padding:14px 16px;display:flex;gap:12px;align-items:center;border-color:rgba(201,122,123,0.3);border-radius:14px">
+        <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid rgba(201,122,123,0.3);background:linear-gradient(135deg,var(--b-blush),#fff);display:flex;align-items:center;justify-content:center;font-size:1.2rem">
+            🏡
+        </div>
+        <div style="flex:1;min-width:0">
+            <h4 style="font-size:10px;color:var(--b-terracotta);letter-spacing:0.15em;margin:0 0 2px;font-weight:700;font-family:'Lato',sans-serif;text-transform:uppercase">💐 Pesan Bundaku</h4>
+            <p id="toast-message" class="f-mono" style="font-size:11px;color:var(--b-muted);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Bundaku siap beraksi! Semangat ya!</p>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════ -->
+<script>
+// ── PARTICLES (BUNGA) ──
+var flowerEmojis = ['🌸','🌼','🌺','🌷','💐','✿','🌻','💮'];
+function spawnParticles(containerId, count) {
+    var c = document.getElementById(containerId);
+    if (!c) return;
+    for (var i = 0; i < count; i++) {
+        var p = document.createElement('div');
+        p.className = 'fp';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.bottom = Math.random() * 20 + 'px';
+        p.style.setProperty('--dur', (3 + Math.random() * 4) + 's');
+        p.style.setProperty('--del', (Math.random() * 6) + 's');
+        p.style.setProperty('--dx',  (Math.random() * 30 - 15) + 'px');
+        p.innerText = flowerEmojis[Math.floor(Math.random() * flowerEmojis.length)];
+        c.appendChild(p);
+    }
+}
+spawnParticles('sidebar-particles', 14);
+spawnParticles('main-particles', 18);
+
+// ── CONFETTI ──
+function spawnConfetti() {
+    var c = document.getElementById('confetti-container');
+    if (!c) return;
+    var colors = ['#e8a098','#c9a048','#8aab88','#c8afc8','#e8b860','#b5614e'];
+    for (var i = 0; i < 50; i++) {
+        var p = document.createElement('div');
+        p.className = 'confetti';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.top  = '-10px';
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        p.style.setProperty('--dur', (2 + Math.random() * 3) + 's');
+        p.style.setProperty('--del', (Math.random() * 2) + 's');
+        p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        p.style.width  = (5 + Math.random() * 8) + 'px';
+        p.style.height = (5 + Math.random() * 8) + 'px';
+        c.appendChild(p);
+    }
+}
+
+// ── ALARM SYSTEM ──
+var alarmAudioCtx = null;
+function playAlarmSound() {
+    try {
+        alarmAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        var melodies = [523.25, 659.25, 783.99, 1046.5, 783.99, 659.25, 523.25, 659.25, 783.99, 1046.5];
+        var time = alarmAudioCtx.currentTime;
+        melodies.forEach(function(freq, i) {
+            var osc  = alarmAudioCtx.createOscillator();
+            var gain = alarmAudioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, time + i * 0.18);
+            gain.gain.setValueAtTime(0, time + i * 0.18);
+            gain.gain.linearRampToValueAtTime(0.35, time + i * 0.18 + 0.05);
+            gain.gain.linearRampToValueAtTime(0, time + i * 0.18 + 0.16);
+            osc.connect(gain);
+            gain.connect(alarmAudioCtx.destination);
+            osc.start(time + i * 0.18);
+            osc.stop(time + i * 0.18 + 0.2);
+        });
+        // Repeat 3 times
+        setTimeout(function(){ playAlarmBell(); }, 2100);
+        setTimeout(function(){ playAlarmBell(); }, 4200);
+    } catch(e) { console.log('Audio not available'); }
+}
+function playAlarmBell() {
+    try {
+        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        var notes = [783.99, 1046.5, 783.99, 1046.5, 783.99, 1046.5];
+        var t = ctx.currentTime;
+        notes.forEach(function(freq, i) {
+            var osc = ctx.createOscillator();
+            var g   = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+            g.gain.setValueAtTime(0.25, t + i * 0.15);
+            g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.15 + 0.14);
+            osc.connect(g); g.connect(ctx.destination);
+            osc.start(t + i * 0.15);
+            osc.stop(t + i * 0.15 + 0.15);
+        });
+    } catch(e) {}
+}
+
+function triggerAlarm(newsCount, asstCount) {
+    var alarmEl = document.getElementById('alarm-overlay');
+    var msgs = [
+        "Bundaku telah menyelesaikan semua tugas hari ini dengan sempurna! Saatnya duduk santai dan minum teh hangat. ☕🌸",
+        "Semua pekerjaan rumah beres! Bunda luar biasa! Manjakan diri dengan istirahat yang pantas. 💐✨",
+        "Misi selesai! Dapur bersih, belanjaan tuntas. Bunda adalah pahlawan keluarga! 👑🏡",
+        "Kerja keras Bunda membuahkan hasil! Rumah nyaman, keluarga senang. Selamat beristirahat! 🌺💝"
+    ];
+    var titles = [
+        "Semua Tugas Selesai! 🎉",
+        "Bunda Hebat Hari Ini! ✨",
+        "Misi Rumah Tangga Tuntas! 🏆",
+        "Bravo, Bunda! 🌸"
+    ];
+    var emojis = ['🔔','🎊','🏆','🌸','✨','💐'];
+    var pick = Math.floor(Math.random() * msgs.length);
+    document.getElementById('alarm-title').innerText  = titles[pick];
+    document.getElementById('alarm-message').innerText = msgs[pick];
+    document.getElementById('alarm-emoji').innerText  = emojis[Math.floor(Math.random() * emojis.length)];
+    alarmEl.classList.add('active');
+    spawnConfetti();
+    playAlarmSound();
+    // Also vibrate if supported
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
+}
+
+function dismissAlarm() {
+    document.getElementById('alarm-overlay').classList.remove('active');
+    if (alarmAudioCtx) { try { alarmAudioCtx.close(); } catch(e){} }
+}
+
+// ── SIDEBAR MOBILE ──
+function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebar-overlay').classList.add('active');
+    document.getElementById('sidebar-close-btn').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('active');
+    document.getElementById('sidebar-close-btn').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+// ── KONFIGURASI ──
+const WEB_APP_URL          = 'https://script.google.com/macros/s/AKfycbwJ4x1yQMEn5a2dCXDDdkP9SrKRIyXjd3PpKGUBztcak1z3LeHV5--6vP7At8UrbeYy4g/exec';
+const ORGANIC_REWARDS_LINK = "sapphire://miniApp?id=32649384730b2d61c9e79d46de589115&source=2mBadge";
+
+const newsCategoriesRSS = [
+    // 🍳 Masak & Resep
+    'https://news.google.com/rss/search?q=resep+masakan+sehari-hari+rumahan&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=masakan+simple+praktis+keluarga&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=resep+sayuran+bergizi+anak&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=resep+lauk+pauk+nusantara&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=menu+sarapan+pagi+sehat&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=resep+kue+snack+rumahan&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=masakan+mingguan+hemat+bernutrisi&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=resep+dessert+puding+sederhana&hl=id&gl=ID&ceid=ID:id',
+
+    // 🧹 Rumah & Kebersihan
+    'https://news.google.com/rss/search?q=tips+bersih+rumah+cepat&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=cara+rapikan+rumah+minimalis&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=dekorasi+rumah+sederhana+cantik&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=organisasi+lemari+dapur+rumah&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=tips+cuci+pakaian+bersih+bersih&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=cara+menghilangkan+noda+membandel&hl=id&gl=ID&ceid=ID:id',
+
+    // 👨‍👩‍👧‍👦 Keluarga & Parenting
+    'https://news.google.com/rss/search?q=parenting+tips+anak+balita&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=aktivitas+bermain+anak+rumah&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=tips+mendidik+anak+karakter&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=keluarga+harmonis+tips+hubungan&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=tumbuh+kembang+anak+optimal&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=pendidikan+karakter+anak+di+rumah&hl=id&gl=ID&ceid=ID:id',
+
+    // 💊 Kesehatan & Gizi
+    'https://news.google.com/rss/search?q=makanan+sehat+gizi+seimbang&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=nutrisi+ibu+dan+anak+sehat&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=tips+imunitas+daya+tahan+tubuh&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=hidup+sehat+ibu+rumah+tangga&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=olahraga+ringan+ibu+di+rumah&hl=id&gl=ID&ceid=ID:id',
+
+    // 💰 Keuangan Rumah Tangga
+    'https://news.google.com/rss/search?q=hemat+belanja+bulanan+tips&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=mengelola+keuangan+rumah+tangga&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=belanja+cerdas+pasar+supermarket&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=promo+diskon+bahan+makanan&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=investasi+tabungan+keluarga&hl=id&gl=ID&ceid=ID:id',
+
+    // 🌿 Berkebun & DIY
+    'https://news.google.com/rss/search?q=berkebun+sayuran+di+rumah&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=tanaman+hias+dalam+ruangan&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=DIY+kerajinan+tangan+rumahan&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=dapur+herbal+tanaman+obat+keluarga&hl=id&gl=ID&ceid=ID:id',
+
+    // 💄 Kecantikan & Self-Care
+    'https://news.google.com/rss/search?q=perawatan+kulit+wajah+alami&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=skincare+ibu+rumah+tangga+murah&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=self+care+ibu+me+time&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=fashion+style+ibu+muda&hl=id&gl=ID&ceid=ID:id',
+
+    // 🛍️ Belanja & Produk Rumah
+    'https://news.google.com/rss/search?q=produk+pembersih+rumah+terbaik&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=peralatan+dapur+masak+modern&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=rekomendasi+produk+ibu+anak&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=furnitur+rumah+minimalis+murah&hl=id&gl=ID&ceid=ID:id',
+
+    // 🏫 Pendidikan Anak
+    'https://news.google.com/rss/search?q=belajar+dari+rumah+anak+SD&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=les+bimbel+anak+terbaik&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=buku+anak+edukasi+bermain&hl=id&gl=ID&ceid=ID:id',
+
+    // 🌸 Lifestyle & Inspirasi
+    'https://news.google.com/rss/search?q=motivasi+ibu+rumah+tangga+bahagia&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=cerita+inspiratif+ibu+hebat&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=tips+produktif+ibu+di+rumah&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=tips+traveling+liburan+keluarga&hl=id&gl=ID&ceid=ID:id',
+    'https://news.google.com/rss/search?q=wisata+keluarga+indonesia+murah&hl=id&gl=ID&ceid=ID:id',
+];
+
+// ── STATE ──
+var globalData = [], globalNewsKeywords = [], assistantQueue = [];
+var botActive = false, botType = null, botTimer = null;
+var currentIndex = 0, botWindow = null;
+var linksReadSinceBreak = 0, nextBreakAt = 5;
+var totalNewsCompleted = 0, totalAsstCompleted = 0;
+
+// ── UI HELPERS ──
+function speak(msg) {
+    document.getElementById('toast-message').innerText = msg;
+    var t = document.getElementById('b-toast');
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 4800);
+}
+
+function addLog(mode, task) {
+    var body = document.getElementById('history-log');
+    if (body.querySelector('td[colspan]')) body.innerHTML = '';
+    var time = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+    var modeColors = {
+        'Resep':   {color:'var(--b-terracotta)', emoji:'🗞️'},
+        'Belanja': {color:'var(--b-sage)',       emoji:'🛒'}
+    };
+    var m = modeColors[mode] || {color:'var(--b-dusty)', emoji:'📌'};
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+        '<td style="color:' + m.color + ';font-weight:700;font-size:11px;white-space:nowrap">' + m.emoji + ' ' + mode + '</td>' +
+        '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--b-muted)">' + task + '</td>' +
+        '<td style="text-align:center;color:var(--b-muted);font-size:10px">' + time + '</td>';
+    body.prepend(tr);
+}
+
+function showModal(msg, title, btnText) {
+    title   = title   || 'Pesan Bunda';
+    btnText = btnText || 'Siap, Bunda!';
+    document.getElementById('modal-title').innerText     = title;
+    document.getElementById('b-modal-message').innerHTML = msg;
+    document.getElementById('modal-btn').innerText       = btnText;
+    var m = document.getElementById('b-modal');
+    m.style.display = 'flex';
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ m.classList.add('visible'); }); });
+}
+function closeModal() {
+    var m = document.getElementById('b-modal');
+    m.classList.remove('visible');
+    setTimeout(function(){ m.style.display = 'none'; }, 380);
+}
+
+function updateProgress(current, total, text) {
+    document.getElementById('active-progress-panel').style.display = 'block';
+    document.getElementById('active-progress-bar').style.width = ((current + 1) / total * 100) + '%';
+    document.getElementById('active-counter').innerText = (current + 1) + '/' + total;
+    document.getElementById('active-status-text').innerHTML =
+        '<i class="fa-solid fa-circle-notch fa-spin" style="color:var(--b-rose)"></i> ' + text;
+}
+
+// ── ISTIRAHAT SEJENAK ──
+function triggerCoffeeBreak(callback) {
+    var dur = (Math.floor(Math.random() * 4) + 3) * 1000;
+    var msgs = [
+        "Bunda istirahat sejenak, sambil minum teh hangat... ☕",
+        "Waktunya atur nafas sebentar, Bunda! 🌸",
+        "Bunda merapikan meja dapur dulu... 🍴",
+        "Sebentar ya, Bunda menengok si kecil dulu! 👶",
+        "Sambil menunggu, Bunda menyiram tanaman... 🌿"
+    ];
+    if (botWindow && !botWindow.closed) botWindow.close();
+    showModal(
+        msgs[Math.floor(Math.random() * msgs.length)] + '<br><br>' +
+        '<span style="color:var(--b-rose);font-family:\'Share Tech Mono\',monospace">' +
+        'Lanjut dalam ' + (dur / 1000) + ' detik...</span>',
+        '☕ Istirahat Sejenak', 'Tunggu ya...'
+    );
+    linksReadSinceBreak = 0;
+    nextBreakAt = Math.floor(Math.random() * 3) + 2;
+    setTimeout(function() {
+        closeModal();
+        speak("Bunda kembali bersemangat! Mari lanjutkan! 💪");
+        callback();
+    }, dur);
+}
+
+// ── RESET ──
+function resetBot() {
+    if (botTimer) { clearTimeout(botTimer); botTimer = null; }
+    if (botWindow && !botWindow.closed) { botWindow.close(); botWindow = null; }
+    closeModal();
+    botActive = false; botType = null;
+    currentIndex = 0; assistantQueue = [];
+    linksReadSinceBreak = 0; nextBreakAt = 5;
+    totalNewsCompleted = 0; totalAsstCompleted = 0;
+
+    var btn = document.getElementById('master-start-btn');
+    btn.className = 'btn-bunda';
+    btn.innerHTML = '<span style="font-size:1.1rem">🏡</span> Mulai Tugas Harian, Bunda!';
+
+    document.getElementById('active-progress-panel').style.display = 'none';
+    document.getElementById('active-progress-bar').style.width = '0%';
+    document.getElementById('active-counter').innerText = '0/0';
+    document.getElementById('active-status-text').innerHTML =
+        '<i class="fa-solid fa-circle-notch fa-spin" style="color:var(--b-rose)"></i> Sedang mengerjakan...';
+
+    speak("Kegiatan dihentikan. Bunda bisa mulai lagi kapan saja! 🌸");
+}
+
+// ── MASTER BOT ──
+async function startMasterBot() {
+    if (botActive) { botActive = false; resetBot(); return; }
+
+    var isNews  = document.getElementById('master-news-active').checked;
+    var isAsst  = document.getElementById('master-asst-active').checked;
+    var interMs = parseInt(document.getElementById('inter-bot-delay').value) * 1000;
+
+    if (!isNews && !isAsst) {
+        showModal("Pilih minimal satu tugas sebelum memulai ya, Bunda! 🌸", "❌ Pilih Tugas Dulu", "Baik!");
+        return;
+    }
+
+    botActive = true;
+    totalNewsCompleted = 0; totalAsstCompleted = 0;
+    linksReadSinceBreak = 0; nextBreakAt = Math.floor(Math.random() * 5) + 4;
+
+    var btn = document.getElementById('master-start-btn');
+    btn.className = 'btn-stop';
+    btn.innerHTML = '<i class="fa-solid fa-square"></i> Hentikan Kegiatan';
+
+    if (isNews) {
+        speak("Bunda mulai mencari resep dan inspirasi masak! 🍳");
+        await runNewsProcess();
+        if (isAsst && botActive) {
+            showModal('Resep selesai dicari! Lanjut ke daftar belanja dalam ' + (interMs/1000) + ' detik...', '🛒 Transisi Tugas', 'Tunggu ya...');
+            await new Promise(function(r){ setTimeout(r, interMs); });
+            closeModal();
+        }
+    }
+
+    if (isAsst && botActive) {
+        speak("Bunda mulai menelusuri daftar belanjaan! 🛒");
+        await runAssistantProcess();
+    }
+
+    if (botActive) {
+        // ═══ TRIGGER ALARM ═══
+        triggerAlarm(totalNewsCompleted, totalAsstCompleted);
+        // Reset button
+        var btnEl = document.getElementById('master-start-btn');
+        btnEl.className = 'btn-bunda';
+        btnEl.innerHTML = '<span style="font-size:1.1rem">🏡</span> Mulai Tugas Harian, Bunda!';
+        botActive = false;
+        // Also open rewards
+        setTimeout(function(){ window.location.href = ORGANIC_REWARDS_LINK; }, 3000);
+    }
+}
+
+// ── RSS FETCH ──
+async function fetchSingleRSS(url) {
+    try {
+        var r = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(url));
+        var d = await r.json();
+        if (d.status === 'ok') return d.items.map(function(i){ return i.title.split(' - ')[0].trim(); });
+    } catch(e) {}
+    return [];
+}
+async function initNewsData() {
+    try {
+        var results = await Promise.allSettled(newsCategoriesRSS.slice(0, 6).map(fetchSingleRSS));
+        results.forEach(function(r){ if (r.status === 'fulfilled') globalNewsKeywords.push.apply(globalNewsKeywords, r.value); });
+        var unique = [];
+        globalNewsKeywords.forEach(function(v){ if (unique.indexOf(v) === -1) unique.push(v); });
+        globalNewsKeywords = unique.sort(function(){ return Math.random() - 0.5; }).slice(0, 80);
+    } catch(e) {}
+}
+
+// ── NEWS PROCESS ──
+function runNewsProcess() {
+    return new Promise(function(resolve) {
+        var fallback = [
+            "resep ayam goreng simple","cara buat opor ayam","resep sayur asem segar",
+            "masakan sehari-hari praktis","resep tumis kangkung bawang","cara buat soto ayam",
+            "nasi goreng spesial keluarga","resep bakso homemade enak","cara buat gado-gado",
+            "resep capcay sayuran bergizi","tips masak hemat bahan","cara buat rendang empuk",
+            "resep sup sayuran anak","cara buat sambal matang","tips rumah selalu rapi",
+            "cara cuci baju noda keras","tips dekorasi dapur kecil","cara simpan sayuran segar",
+            "tips memasak dengan slow cooker","cara membuat anak mau makan sayur",
+            "tips mengatur jadwal harian ibu","cara buat kue brownies mudah",
+            "resep minuman sehat keluarga","tips belanja hemat bulanan",
+            "cara membuat taman kecil di rumah","tips mengajari anak membaca",
+            "cara membuat sabun cuci piring alami","tips menghemat gas memasak"
+        ];
+        var kw = globalNewsKeywords.length > 0
+            ? globalNewsKeywords.slice().sort(function(){ return Math.random() - 0.5; })
+            : fallback.slice().sort(function(){ return Math.random() - 0.5; });
+
+        var pfx = ["","cara ","tips ","resep ","ide ","panduan "];
+        currentIndex = 0; botType = 'news';
+
+        function step() {
+            var limit = parseInt(document.getElementById('news-limit').value);
+            if (currentIndex >= limit || !botActive) { if (botWindow) botWindow.close(); resolve(); return; }
+            if (linksReadSinceBreak >= nextBreakAt) { triggerCoffeeBreak(step); return; }
+
+            var base  = kw[currentIndex % kw.length];
+            var p     = pfx[Math.floor(currentIndex / kw.length) % pfx.length];
+            var q     = (p + base).trim();
+            var minD  = parseInt(document.getElementById('news-min-delay').value);
+            var maxD  = parseInt(document.getElementById('news-max-delay').value);
+            var delay = (Math.floor(Math.random() * (maxD - minD + 1)) + minD) * 1000;
+
+            updateProgress(currentIndex, limit, '🗞️ Resep: ' + q.substring(0, 28) + '...');
+            botWindow = window.open('https://www.bing.com/search?q=' + encodeURIComponent(q) + '&form=QBLH', 'worker', 'width=800,height=600');
+
+            botTimer = setTimeout(function() {
+                if (botWindow && !botWindow.closed) botWindow.close();
+                addLog('Resep', q);
+                currentIndex++; linksReadSinceBreak++; totalNewsCompleted++;
+                setTimeout(step, 1000);
+            }, delay);
+        }
+        step();
+    });
+}
+
+// ── ASSISTANT PROCESS ──
+function runAssistantProcess() {
+    return new Promise(function(resolve) {
+        if (!globalData.length) { resolve(); return; }
+        var map = {};
+        globalData.forEach(function(i){ map[i.url] = i; });
+        var unique = Object.values(map);
+        var splitIdx = Math.max(0, unique.length - 10);
+        var newest = unique.slice(splitIdx).sort(function(){ return Math.random() - 0.5; });
+        var older  = unique.slice(0, splitIdx).sort(function(){ return Math.random() - 0.5; });
+        assistantQueue = [];
+        var mx = Math.max(newest.length, older.length);
+        for (var i = 0; i < mx; i++) {
+            if (i < older.length)  assistantQueue.push(older[i]);
+            if (i < newest.length) assistantQueue.push(newest[i]);
+        }
+        currentIndex = 0; botType = 'assistant';
+
+        function step() {
+            var limit = parseInt(document.getElementById('asst-count').value);
+            if (currentIndex >= limit || currentIndex >= assistantQueue.length || !botActive) {
+                if (botWindow) botWindow.close(); resolve(); return;
+            }
+            if (linksReadSinceBreak >= nextBreakAt) { triggerCoffeeBreak(step); return; }
+
+            var item  = assistantQueue[currentIndex];
+            var minD  = parseInt(document.getElementById('asst-min-delay').value);
+            var maxD  = parseInt(document.getElementById('asst-max-delay').value);
+            var delay = (Math.floor(Math.random() * (maxD - minD + 1)) + minD) * 1000;
+
+            updateProgress(currentIndex, limit, '🛒 Belanja: ' + item.title.substring(0, 24) + '...');
+            botWindow = window.open(item.url, 'worker', 'width=800,height=600');
+
+            botTimer = setTimeout(function() {
+                if (botWindow && !botWindow.closed) botWindow.close();
+                addLog('Belanja', item.title);
+                currentIndex++; linksReadSinceBreak++; totalAsstCompleted++;
+                setTimeout(step, 1000);
+            }, delay);
+        }
+        step();
+    });
+}
+
+// ── FETCH GAS ──
+function fetchDataFromGAS() {
+    return new Promise(function(resolve) {
+        fetch(WEB_APP_URL)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (Array.isArray(data) && data.length > 0) {
+                    globalData = data;
+                    document.getElementById('db-link-icon').style.color = '#4ade80';
+                    document.getElementById('db-status-text').innerText = 'Terhubung — ' + data.length + ' item daftar belanja';
+                    document.getElementById('sidebar-db-count').textContent = data.length + ' item';
+                    document.getElementById('gas-status').innerHTML = '<i class="fa-solid fa-circle-check" style="color:#4ade80;font-size:10px"></i> <span style="color:#4ade80">Online</span>';
+                    document.getElementById('gas-server-label').innerHTML =
+                        '<i class="fa-solid fa-circle-check" style="color:#4ade80"></i> Terhubung &middot; ' + data.length + ' data';
+                    document.getElementById('gas-info').style.display = 'none';
+                } else {
+                    document.getElementById('db-link-icon').style.color = 'var(--b-gold)';
+                    document.getElementById('db-status-text').innerText = 'Daftar belanja kosong atau belum tersedia';
+                    document.getElementById('sidebar-db-count').textContent = '—';
+                    document.getElementById('gas-status').innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:var(--b-gold);font-size:10px"></i> <span style="color:var(--b-gold)">Kosong</span>';
+                    document.getElementById('gas-server-label').innerHTML =
+                        '<i class="fa-solid fa-triangle-exclamation" style="color:var(--b-gold)"></i> Daftar belum diisi';
+                }
+                resolve();
+            })
+            .catch(function(err) {
+                document.getElementById('db-link-icon').style.color = 'var(--b-rose)';
+                document.getElementById('db-status-text').innerText = 'Gagal terhubung ke server';
+                document.getElementById('sidebar-db-count').textContent = 'Error';
+                document.getElementById('gas-status').innerHTML = '<i class="fa-solid fa-circle-xmark" style="color:var(--b-rose);font-size:10px"></i> <span style="color:var(--b-rose)">Error</span>';
+                document.getElementById('gas-server-label').innerHTML =
+                    '<i class="fa-solid fa-circle-xmark" style="color:var(--b-rose)"></i> Koneksi gagal';
+                resolve();
+            });
+    });
+}
+
+// ── INIT ──
+window.addEventListener('load', async function() {
+    var loadEl = document.getElementById('loading');
+    var timeout = new Promise(function(r){ setTimeout(r, 4000); });
+    await Promise.race([
+        Promise.allSettled([fetchDataFromGAS(), initNewsData()]),
+        timeout
+    ]);
+    loadEl.classList.add('fade-out');
+    setTimeout(function(){ loadEl.style.display = 'none'; }, 850);
+
+    document.getElementById('sidebar-news-count').textContent =
+        globalNewsKeywords.length > 0 ? globalNewsKeywords.length + ' resep' : 'Cadangan';
+
+    speak(globalNewsKeywords.length > 0 || globalData.length > 0
+        ? 'Bundaku siap beraksi! ' + globalNewsKeywords.length + ' inspirasi tersedia! 🌸'
+        : 'Mode mandiri aktif. Bunda siap mengerjakan tugas harian! 💪'
+    );
+});
+</script>
+</body>
+</html>
